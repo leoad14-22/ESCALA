@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escala Ambulatorial</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f2f2f0;
+    --white: #ffffff;
+    --border: #e0deda;
+    --text: #111110;
+    --muted: #6a6660;
+    --card-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    --col-labels-bg: #f4f4f2;
+    --row-hover: #f8f8f6;
+    --time-hover: #eeecea;
+    --accent: #c9a84c;
+    --accent2: #e6c76b;
+    --accent-rgb: 201,168,76;
+    --acc-u: #1a56db;
+    --acc-u2: #3b6ef0;
+    --acc-u-rgb: 26,86,219;
+    --acc-f: #0a7a55;
+    --acc-f2: #14a372;
+    --acc-f-rgb: 10,122,85;
+    --acc-c: #7e22ce;
+    --acc-c2: #9f3ef0;
+    --acc-c-rgb: 126,34,206;
+    --px: clamp(1rem, 4vw, 2rem);
+    --tr: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    --topbar-shadow: 0 1px 12px rgba(0,0,0,0.07);
+    --header-bg: linear-gradient(135deg, #111110 0%, #1e1d1b 100%);
+    --doctor-color: #0f0f0e;
+    --specialty-color: #3a3835;
+    --time-color: #5a5652;
+  }
+  html.dark {
+    --bg: #0c0c0b;
+    --white: #141413;
+    --border: #2a2826;
+    --text: #f0ede8;
+    --muted: #7a7670;
+    --card-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    --col-labels-bg: #111110;
+    --row-hover: #1c1b19;
+    --time-hover: #201f1d;
+    --header-bg: linear-gradient(135deg, #050505 0%, #0e0e0d 100%);
+    --doctor-color: #f0ede8;
+    --specialty-color: #c8c4be;
+    --time-color: #9a9690;
+    --topbar-shadow: 0 1px 12px rgba(0,0,0,0.5);
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  button { font-family:inherit; cursor:pointer; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh; -webkit-text-size-adjust: 100%;
+    transition: var(--tr);
+  }
+
+  /* ── LOADING ── */
+  .loading-overlay {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 999; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1.25rem; font-size: 0.8rem; color: var(--muted);
+    font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+    transition: var(--tr);
+  }
+  .loading-icon { font-size: 2.5rem; animation: pulse-icon 1.5s ease-in-out infinite; }
+  .loading-logo {
+    height: 80px; width: auto; object-fit: contain;
+    animation: pulse-icon 1.5s ease-in-out infinite;
+  }
+  .loading-logo-light { display: block; }
+  .loading-logo-dark  { display: none; }
+  html.dark .loading-logo-light { display: none; }
+  html.dark .loading-logo-dark  { display: block; }
+  @keyframes pulse-icon { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.92)} }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.75s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--white); border-bottom: 1px solid var(--border);
+    padding: 0 var(--px); display: flex; align-items: center;
+    justify-content: space-between; gap: 0.75rem; height: 72px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--topbar-shadow); transition: var(--tr);
+  }
+  .logo-wrap { display:flex; align-items:center; gap:0.7rem; flex-shrink:0; }
+  .logo-img {
+    height:52px; width:auto; object-fit:contain;
+    transition:opacity 0.3s;
+    flex-shrink:0;
+  }
+  .logo-img-light { display:block; }
+  .logo-img-dark  { display:none; }
+  html.dark .logo-img-light { display:none; }
+  html.dark .logo-img-dark  { display:block; }
+  .logo-label {
+    font-family:'Cormorant Garamond',serif;
+    font-size:clamp(0.85rem,2vw,1rem); font-weight:600;
+    color:var(--text); letter-spacing:0.01em; line-height:1.15;
+  }
+  .logo-label small {
+    display:block; font-family:'DM Sans',sans-serif;
+    font-size:0.56rem; font-weight:500; color:var(--muted);
+    letter-spacing:0.1em; text-transform:uppercase;
+  }
+  .topbar-right { display:flex; align-items:center; gap:0.5rem; flex-shrink:0; }
+  .sync-status {
+    font-size:0.68rem; font-weight:500; color:var(--muted);
+    display:flex; align-items:center; gap:0.3rem; white-space:nowrap;
+  }
+  .sync-dot {
+    width:6px; height:6px; border-radius:50%;
+    background:#888; flex-shrink:0; transition:background 0.3s;
+  }
+  .sync-dot.synced  { background:#6aaa6a; }
+  .sync-dot.syncing { background:var(--accent); animation:pulse 1s infinite; }
+  .sync-dot.error   { background:#cc4444; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .topbar-badge {
+    background:rgba(201,168,76,0.1); color:var(--accent);
+    border:1px solid rgba(201,168,76,0.3); border-radius:4px;
+    padding:0.28rem 0.7rem; font-size:0.65rem; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.1em; white-space:nowrap;
+  }
+  .theme-btn {
+    background:transparent; color:var(--text);
+    border:1px solid var(--border); border-radius:6px;
+    padding:0.44rem 0.65rem; font-size:0.82rem;
+    transition:var(--tr),transform 0.15s,border-color 0.15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .theme-btn:hover { transform:translateY(-1px); border-color:var(--accent); }
+  .edit-btn {
+    background:transparent; color:var(--text);
+    border:1px solid var(--border); border-radius:6px;
+    padding:0.5rem 1rem; font-size:0.73rem; font-weight:600;
+    letter-spacing:0.05em; text-transform:uppercase;
+    display:flex; align-items:center; gap:0.35rem;
+    transition:transform 0.15s,border-color 0.15s,color 0.15s,background 0.15s;
+    white-space:nowrap; -webkit-tap-highlight-color:transparent;
+  }
+  .edit-btn:hover { transform:translateY(-1px); border-color:var(--accent); color:var(--accent); }
+  .edit-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(var(--accent-rgb),0.07); }
+  .save-btn {
+    background:var(--accent); color:#0c0c0b;
+    border:none; border-radius:6px;
+    padding:0.5rem 1rem; font-size:0.73rem; font-weight:700;
+    letter-spacing:0.05em; text-transform:uppercase;
+    display:flex; align-items:center; gap:0.35rem;
+    box-shadow:0 2px 10px rgba(var(--accent-rgb),0.3);
+    transition:transform 0.15s,box-shadow 0.15s,background 0.15s;
+    white-space:nowrap; -webkit-tap-highlight-color:transparent;
+  }
+  .save-btn:hover { transform:translateY(-1px); box-shadow:0 4px 18px rgba(var(--accent-rgb),0.45); background:var(--accent2); }
+  .save-btn:active { transform:scale(0.97); }
+  .save-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    background:var(--header-bg); padding:clamp(1.75rem,4vw,2.75rem) var(--px) 0;
+    position:relative; overflow:hidden; transition:var(--tr);
+  }
+  .page-header::before {
+    content:''; position:absolute; bottom:0; left:0; right:0;
+    height:1px; background:linear-gradient(90deg,transparent,rgba(201,168,76,0.5),transparent);
+  }
+  .page-header::after {
+    content:''; position:absolute; right:-80px; top:-80px;
+    width:320px; height:320px; border-radius:50%;
+    background:radial-gradient(circle,rgba(201,168,76,0.07) 0%,transparent 65%);
+    pointer-events:none;
+  }
+  .page-header-inner { max-width:1200px; margin:0 auto; position:relative; z-index:1; }
+  .page-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:clamp(1.8rem,5vw,3rem); font-weight:600;
+    color:#fff; margin-bottom:0.2rem; line-height:1.15; letter-spacing:0.01em;
+  }
+  .page-title span { color:var(--accent); }
+  .page-subtitle {
+    color:rgba(255,255,255,0.4); font-size:clamp(0.72rem,2vw,0.8rem);
+    letter-spacing:0.1em; text-transform:uppercase;
+  }
+  .header-divider {
+    width:40px; height:1px;
+    background:linear-gradient(90deg,var(--accent),transparent);
+    margin:0.85rem 0;
+  }
+
+  /* ── TABS ── */
+  .tabs-strip {
+    display:flex; gap:0; margin-top:1.5rem;
+    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .tabs-strip::-webkit-scrollbar { display:none; }
+  .tab-btn {
+    padding:0.8rem 1.6rem; background:transparent; border:none;
+    border-bottom:2px solid transparent;
+    color:rgba(255,255,255,0.4);
+    font-size:clamp(0.7rem,1.8vw,0.8rem); font-weight:600;
+    letter-spacing:0.09em; text-transform:uppercase;
+    cursor:pointer; white-space:nowrap;
+    transition:color 0.2s,border-color 0.2s;
+    -webkit-tap-highlight-color:transparent;
+    font-family:'DM Sans',sans-serif;
+    display:flex; align-items:center; gap:0.45rem;
+  }
+  .tab-btn:hover { color:rgba(255,255,255,0.7); }
+  .tab-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .tab-btn[data-s="unifran"]  .tab-dot { background:#6b9fff; }
+  .tab-btn[data-s="unifacef"] .tab-dot { background:#4ad199; }
+  .tab-btn[data-s="consultas"].tab-dot { background:#c084fc; }
+  .tab-btn[data-s="unifran"].active   { color:#6b9fff; border-bottom-color:#6b9fff; }
+  .tab-btn[data-s="unifacef"].active  { color:#4ad199; border-bottom-color:#4ad199; }
+  .tab-btn[data-s="consultas"].active { color:#c084fc; border-bottom-color:#c084fc; }
+
+  /* ── MAIN ── */
+  .main-content { max-width:1200px; margin:0 auto; padding:clamp(1.5rem,3vw,2.25rem) var(--px); }
+  .section { display:none; }
+  .section.visible { display:block; }
+  .section-label {
+    font-size:0.62rem; font-weight:600; text-transform:uppercase;
+    letter-spacing:0.18em; color:var(--muted); margin-bottom:1.1rem;
+    display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap;
+  }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); min-width:20px; }
+  .lbl-badge {
+    padding:0.15rem 0.55rem; border-radius:3px;
+    font-size:0.57rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  }
+  .lbl-u { background:rgba(var(--acc-u-rgb),0.1); color:var(--acc-u2); border:1px solid rgba(var(--acc-u-rgb),0.25); }
+  .lbl-f { background:rgba(var(--acc-f-rgb),0.1); color:var(--acc-f2); border:1px solid rgba(var(--acc-f-rgb),0.25); }
+  .lbl-c { background:rgba(var(--acc-c-rgb),0.1); color:var(--acc-c2); border:1px solid rgba(var(--acc-c-rgb),0.25); }
+
+  /* ── GRID ── */
+  .grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));
+    gap:clamp(0.65rem,2vw,1rem); margin-bottom:1.5rem;
+  }
+
+  /* ── DAY CARD ── */
+  .day-card {
+    background:var(--white); border:1px solid var(--border);
+    border-radius:8px; overflow:hidden;
+    box-shadow:var(--card-shadow);
+    transition:box-shadow 0.2s,transform 0.2s,border-color 0.2s;
+    animation:fadeUp 0.45s ease both; min-width:0;
+  }
+  .day-card:hover { box-shadow:0 8px 28px rgba(0,0,0,0.11); transform:translateY(-2px); }
+  html.dark .day-card:hover { box-shadow:0 8px 32px rgba(0,0,0,0.55); }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .card-top { height:3px; }
+  .top-unifran   { background:linear-gradient(90deg,var(--acc-u),var(--acc-u2),transparent); }
+  .top-unifacef  { background:linear-gradient(90deg,var(--acc-f),var(--acc-f2),transparent); }
+  .top-consultas { background:linear-gradient(90deg,var(--acc-c),var(--acc-c2),transparent); }
+
+  .day-header {
+    padding:0.85rem 1rem 0.65rem;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border); gap:0.5rem;
+  }
+  .day-header-inner { display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0; }
+  .day-name-input {
+    font-family:'Cormorant Garamond',serif;
+    font-size:clamp(0.95rem,2.5vw,1.1rem); font-weight:700;
+    color:var(--text); letter-spacing:0.02em;
+    background:transparent; border:1px solid transparent;
+    border-radius:4px; outline:none; width:100%; min-width:0;
+    padding:1px 3px; transition:border-color 0.15s,background 0.15s;
+  }
+  .day-name-input:not([readonly]):focus { border-color:var(--accent); background:var(--time-hover); }
+  .day-badge {
+    font-size:0.54rem; font-weight:700; border-radius:3px;
+    padding:0.1rem 0.45rem; text-transform:uppercase;
+    letter-spacing:0.14em; flex-shrink:0; font-family:'DM Sans',sans-serif;
+  }
+  .badge-unifran   { color:var(--acc-u2); background:rgba(var(--acc-u-rgb),0.1); border:1px solid rgba(var(--acc-u-rgb),0.25); }
+  .badge-unifacef  { color:var(--acc-f2); background:rgba(var(--acc-f-rgb),0.1); border:1px solid rgba(var(--acc-f-rgb),0.25); }
+  .badge-consultas { color:var(--acc-c2); background:rgba(var(--acc-c-rgb),0.1); border:1px solid rgba(var(--acc-c-rgb),0.25); }
+
+  .del-day-btn {
+    width:22px; height:22px; border-radius:4px;
+    border:1px solid var(--border); background:transparent;
+    color:var(--muted); font-size:0.72rem; flex-shrink:0;
+    display:none; align-items:center; justify-content:center;
+    transition:all 0.12s; cursor:pointer;
+  }
+  .del-day-btn:hover { background:rgba(200,60,60,0.1); color:#c04040; border-color:rgba(200,60,60,0.35); }
+  .edit-mode .del-day-btn { display:flex; }
+
+  /* ── SCHEDULE ROWS ── */
+  .col-labels, .schedule-row {
+    display:grid; grid-template-columns:54px 1fr 1fr; align-items:center;
+  }
+  .col-labels {
+    padding:0.4rem 0.9rem; background:var(--col-labels-bg);
+    border-bottom:1px solid var(--border);
+  }
+  .col-labels span {
+    font-size:0.57rem; font-weight:700; color:var(--muted);
+    text-transform:uppercase; letter-spacing:0.1em;
+  }
+  .col-labels span:first-child { text-align:left; }
+  .col-labels span:nth-child(2) { text-align:left; padding-left:2px; }
+  .col-labels span:nth-child(3) { text-align:right; }
+
+  .schedule-row {
+    padding:0.7rem 0.9rem; border-bottom:1px solid rgba(0,0,0,0.04);
+    transition:background 0.12s; min-width:0; gap:0.25rem;
+  }
+  html.dark .schedule-row { border-bottom-color:rgba(255,255,255,0.04); }
+  .schedule-row:hover { background:var(--row-hover); }
+  .schedule-row:last-child { border-bottom:none; }
+
+  /* ── TEXT — IMPROVED VISIBILITY ── */
+  .time-chip {
+    font-size:0.78rem; font-weight:700;
+    color:var(--time-color);
+    font-variant-numeric:tabular-nums;
+    font-family:'DM Sans',sans-serif;
+    white-space:nowrap;
+  }
+  .doctor-cell {
+    font-size:0.85rem; font-weight:600;
+    color:var(--doctor-color);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    line-height:1.3;
+  }
+  .specialty-cell {
+    font-size:0.78rem; font-weight:500;
+    color:var(--specialty-color);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    text-align:right; line-height:1.3;
+  }
+
+  /* ── EDIT MODE ── */
+  .edit-mode .col-labels,
+  .edit-mode .schedule-row { grid-template-columns:54px 1fr 1fr 22px; }
+  .edit-mode .schedule-row { padding:0.5rem 0.65rem; gap:0.3rem; }
+  .edit-mode .col-labels   { padding:0.4rem 0.65rem; }
+
+  .cell-edit {
+    font-family:'DM Sans',sans-serif; font-size:0.83rem; font-weight:500;
+    background:transparent; border:1px solid transparent;
+    border-radius:4px; padding:0.22rem 0.35rem;
+    color:var(--text); width:100%; outline:none;
+    transition:border-color 0.12s,background 0.12s;
+  }
+  .cell-edit:focus { border-color:var(--accent); background:var(--time-hover); }
+  .cell-edit.time-edit { font-weight:700; font-size:0.78rem; color:var(--time-color); width:52px; }
+  .cell-edit.spec-edit { font-size:0.78rem; color:var(--specialty-color); }
+
+  .del-row-btn {
+    width:20px; height:20px; border-radius:3px;
+    border:1px solid var(--border); background:transparent;
+    color:var(--muted); font-size:0.66rem; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.12s; cursor:pointer;
+  }
+  .del-row-btn:hover { background:rgba(200,60,60,0.1); color:#c04040; border-color:rgba(200,60,60,0.35); }
+
+  .empty-row {
+    padding:1.5rem 0.9rem; text-align:center;
+    font-size:0.75rem; color:var(--muted); font-style:italic;
+  }
+  .add-row-btn {
+    width:100%; padding:0.55rem;
+    background:transparent; border:none; border-top:1px dashed var(--border);
+    color:var(--muted); font-size:0.65rem; font-weight:600;
+    letter-spacing:0.1em; text-transform:uppercase;
+    cursor:pointer; transition:background 0.12s,color 0.12s;
+    font-family:'DM Sans',sans-serif; display:none;
+  }
+  .edit-mode .add-row-btn { display:block; }
+  .add-row-btn:hover { background:var(--row-hover); color:var(--text); }
+
+  /* ── ADD DAY ── */
+  .add-day-wrap { display:none; margin-bottom:1.5rem; }
+  .edit-mode .add-day-wrap { display:block; }
+  .add-day-btn {
+    width:100%; border:1.5px dashed var(--border);
+    border-radius:8px; background:transparent;
+    padding:0.85rem; color:var(--muted);
+    font-size:0.7rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+    cursor:pointer; transition:border-color 0.15s,color 0.15s,background 0.15s;
+    font-family:'DM Sans',sans-serif;
+  }
+  .add-day-btn:hover { border-style:solid; border-color:var(--accent); color:var(--accent); background:rgba(var(--accent-rgb),0.04); }
+
+  /* ── INFO CARD ── */
+  .info-card {
+    background:var(--white); border:1px solid var(--border); border-radius:8px;
+    padding:1rem 1.25rem; box-shadow:var(--card-shadow);
+    display:flex; align-items:flex-start; gap:0.85rem; margin-bottom:1.5rem;
+    transition:var(--tr);
+  }
+  .info-icon {
+    width:28px; height:28px; background:rgba(201,168,76,0.1); border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.85rem; flex-shrink:0; border:1px solid rgba(201,168,76,0.2);
+  }
+  .info-body { flex:1; min-width:0; }
+  .info-title {
+    font-size:0.6rem; font-weight:600; text-transform:uppercase;
+    letter-spacing:0.14em; color:var(--muted); margin-bottom:0.25rem;
+  }
+  .info-text { font-size:clamp(0.78rem,2vw,0.84rem); color:var(--specialty-color); line-height:1.6; }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; top:1.25rem; left:50%;
+    transform:translateX(-50%) translateY(-100px);
+    background:#111110; color:rgba(255,255,255,0.9);
+    font-size:0.73rem; font-weight:500;
+    padding:0.6rem 1.4rem; border-radius:4px; z-index:200;
+    transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    display:flex; align-items:center; gap:0.5rem;
+    box-shadow:0 4px 24px rgba(0,0,0,0.3); white-space:nowrap;
+    border:1px solid rgba(201,168,76,0.3); letter-spacing:0.03em; pointer-events:none;
+  }
+  html.dark .toast { background:#1a1918; }
+  .toast.show  { transform:translateX(-50%) translateY(0); }
+  .toast.error { background:#2a0f0f; border-color:rgba(200,60,60,0.4); }
+
+  /* ── FOOTER ── */
+  footer {
+    background:var(--white); border-top:1px solid var(--border);
+    padding:0.85rem var(--px); text-align:center;
+    font-size:0.65rem; color:var(--muted); letter-spacing:0.06em;
+    text-transform:uppercase; transition:var(--tr);
+  }
+  footer span { color:var(--accent); }
+
+  /* ── RESPONSIVE ── */
+  @media (min-width:900px)  { .grid { grid-template-columns:repeat(5,1fr); } }
+  @media (max-width:768px)  {
+    .topbar { height:62px; }
+    .sync-status { display:none; }
+    .grid { grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr)); }
+  }
+  @media (max-width:640px)  {
+    .topbar-badge { display:none; }
+    .grid { grid-template-columns:repeat(2,1fr); gap:0.65rem; }
+    .edit-btn .btn-label { display:none; }
+  }
+  @media (max-width:420px) {
+    .grid { grid-template-columns:1fr; }
+    .save-btn .btn-label { display:none; }
+    .logo-label small { display:none; }
+  }
+  @media (min-width:1400px) { .main-content { padding-left:0; padding-right:0; } }
+
+  /* PRINT */
+  @media print {
+    .topbar,.tabs-strip,.add-day-wrap,.add-row-btn,
+    .del-day-btn,.del-row-btn,.toast,footer,.loading-overlay { display:none !important; }
+    .section { display:block !important; }
+    .page-header { padding-bottom:1.5rem; }
+    .day-card { break-inside:avoid; box-shadow:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <img src="cyberleon_black.png" alt="CyberLeon" class="loading-logo loading-logo-light">
+  <img src="cyberleon_white__1_.png" alt="CyberLeon" class="loading-logo loading-logo-dark">
+  <div class="spinner"></div>
+  <span>Conectando ao Firebase…</span>
+</div>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="logo-wrap">
+    <img src="cyberleon_black.png" alt="CyberLeon" class="logo-img logo-img-light">
+    <img src="cyberleon_white__1_.png" alt="CyberLeon" class="logo-img logo-img-dark">
+    <div class="logo-label">
+      Agenda Ambulatorial
+      <small>Unifran &amp; Unifacef · Firebase</small>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="sync-status" id="syncStatus">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncLabel">Conectando…</span>
+    </div>
+    <span class="topbar-badge">🔥 Tempo Real</span>
+    <button class="theme-btn" onclick="_toggleTheme()" title="Alternar modo claro/escuro">
+      <span id="themeIcon">🌙</span>
+    </button>
+    <button class="edit-btn" id="editBtn" onclick="_toggleEdit()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0">
+        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+      <span class="btn-label" id="editBtnLabel">Editar</span>
+    </button>
+    <button class="save-btn" id="saveBtn" onclick="_salvar()" disabled>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0">
+        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+        <polyline points="17 21 17 13 7 13 7 21"/>
+        <polyline points="7 3 7 8 15 8"/>
+      </svg>
+      <span class="btn-label">Salvar</span>
+    </button>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1 class="page-title">Escala <span>Ambulatorial</span></h1>
+    <div class="header-divider"></div>
+    <p class="page-subtitle">Unifran &nbsp;·&nbsp; Unifacef &nbsp;·&nbsp; Ambulatório de Consultas</p>
+    <div class="tabs-strip">
+      <button class="tab-btn active" data-s="unifran" onclick="_showSection('unifran',this)">
+        <span class="tab-dot"></span>UNIFRAN
+      </button>
+      <button class="tab-btn" data-s="unifacef" onclick="_showSection('unifacef',this)">
+        <span class="tab-dot"></span>UNIFACEF
+      </button>
+      <button class="tab-btn" data-s="consultas" onclick="_showSection('consultas',this)">
+        <span class="tab-dot"></span>Amb. Consultas
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-content">
+
+  <!-- UNIFRAN -->
+  <div class="section visible" id="sec-unifran">
+    <p class="section-label">Ambulatório Escola <span class="lbl-badge lbl-u">Convênio SUS</span></p>
+    <div class="grid" id="grid-unifran"></div>
+    <div class="add-day-wrap"><button class="add-day-btn" onclick="_addDay('unifran')">+ Adicionar dia</button></div>
+    <div class="info-card">
+      <div class="info-icon">📋</div>
+      <div class="info-body">
+        <div class="info-title">Informações · Unifran</div>
+        <div class="info-text">Todos os atendimentos são realizados às <strong>13:00</strong>. Especialidades em Cardiologia. Convênio <strong>SUS</strong>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNIFACEF -->
+  <div class="section" id="sec-unifacef">
+    <p class="section-label">Ambulatório Escola <span class="lbl-badge lbl-f">Convênio Prefeitura de Franca</span></p>
+    <div class="grid" id="grid-unifacef"></div>
+    <div class="add-day-wrap"><button class="add-day-btn" onclick="_addDay('unifacef')">+ Adicionar dia</button></div>
+    <div class="info-card">
+      <div class="info-icon">📋</div>
+      <div class="info-body">
+        <div class="info-title">Informações · Unifacef</div>
+        <div class="info-text">Múltiplas especialidades com atendimentos às <strong>07:00</strong> e <strong>13:00</strong>. Convênio <strong>Prefeitura de Franca</strong>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSULTAS -->
+  <div class="section" id="sec-consultas">
+    <p class="section-label">Agenda Livre <span class="lbl-badge lbl-c">Ambulatório de Consultas</span></p>
+    <div class="grid" id="grid-consultas"></div>
+    <div class="add-day-wrap"><button class="add-day-btn" onclick="_addDay('consultas')">+ Adicionar dia</button></div>
+    <div class="info-card">
+      <div class="info-icon">📋</div>
+      <div class="info-body">
+        <div class="info-title">Informações · Ambulatório de Consultas</div>
+        <div class="info-text">Agenda livre para consultas avulsas. Ative o <strong>modo edição</strong> para adicionar médicos e horários.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Agenda Ambulatorial &nbsp;·&nbsp; <span>Unifran &amp; Unifacef</span> &nbsp;·&nbsp; 🔥 Dados em tempo real via Firebase
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+// ── THEME ──────────────────────────────────────────────────────────
+(function() {
+  const s = localStorage.getItem('amb_tema');
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (s === 'dark' || (!s && dark)) document.documentElement.classList.add('dark');
+})();
+window._toggleTheme = function() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('amb_tema', isDark ? 'dark' : 'light');
+  document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+};
+document.getElementById('themeIcon').textContent =
+  document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+
+// ── FIREBASE ───────────────────────────────────────────────────────
+import { initializeApp }           from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyDbvapxIAF2nAoomQZ8NN1eEWoAInihKfo",
+  authDomain:        "ambulatorio-escala.firebaseapp.com",
+  databaseURL:       "https://ambulatorio-escala-default-rtdb.firebaseio.com",
+  projectId:         "ambulatorio-escala",
+  storageBucket:     "ambulatorio-escala.firebasestorage.app",
+  messagingSenderId: "54401991238",
+  appId:             "1:54401991238:web:a8b0442d598ad4dec8c047",
+  measurementId:     "G-H2L24DG04Y"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// ── DEFAULT DATA ───────────────────────────────────────────────────
+const DEFAULT = {
+  unifran: [
+    { id:'u1', day:'Segunda-feira', badge:'SEG', rows:[
+      { time:'13:00', doctor:'Joao Hercos', specialty:'Valvulopatia' }
+    ]},
+    { id:'u2', day:'Terça-feira', badge:'TER', rows:[
+      { time:'13:00', doctor:'Livia', specialty:'Arritmia' }
+    ]},
+    { id:'u3', day:'Quarta-feira', badge:'QUA', rows:[
+      { time:'13:00', doctor:'Bianca Fadul', specialty:'Insuficiência Cardíaca' }
+    ]},
+    { id:'u4', day:'Quinta-feira', badge:'QUI', rows:[
+      { time:'13:00', doctor:'Sergio', specialty:'Isquemia' }
+    ]},
+    { id:'u5', day:'Sexta-feira', badge:'SEX', rows:[
+      { time:'13:00', doctor:'Tamires', specialty:'Hipertensão' }
+    ]}
+  ],
+  unifacef: [
+    { id:'f1', day:'Segunda-feira', badge:'SEG', rows:[
+      { time:'07:00', doctor:'Brenda Brentini',     specialty:'Pediatra' },
+      { time:'07:00', doctor:'Vania G. Carvalho',   specialty:'Gastro Pediatra' },
+      { time:'07:00', doctor:'Terezinha',            specialty:'Hematologia' },
+      { time:'13:00', doctor:'Marcelo Balaben',      specialty:'Mastologia' },
+      { time:'13:00', doctor:'Maria Eugenia',        specialty:'Pediatria' },
+      { time:'13:00', doctor:'Patricia Damian',      specialty:'Geriatria' },
+      { time:'13:30', doctor:'Kellyn Mo',            specialty:'Cirurgia Pediátrica' },
+      { time:'13:00', doctor:'Gisele',               specialty:'Miscelânia' }
+    ]},
+    { id:'f2', day:'Terça-feira', badge:'TER', rows:[
+      { time:'07:00', doctor:'Lelia 15 dias',  specialty:'Amb. de Prematuros' },
+      { time:'13:00', doctor:'Terezinha',       specialty:'Hematologia-INR' },
+      { time:'13:00', doctor:'Luana',           specialty:'Gestante' }
+    ]},
+    { id:'f3', day:'Quarta-feira', badge:'QUA', rows:[
+      { time:'07:00', doctor:'Ana Paula Engler',  specialty:'Endocrino' },
+      { time:'13:00', doctor:'Ana Paula Ghedine', specialty:'Reumato' },
+      { time:'13:00', doctor:'Luana',             specialty:'Gestante' },
+      { time:'13:00', doctor:'Fabiana Telles',    specialty:'Gestante' }
+    ]},
+    { id:'f4', day:'Quinta-feira', badge:'QUI', rows:[
+      { time:'07:00', doctor:'Claudio Formigoni',   specialty:'Procto' },
+      { time:'07:00', doctor:'Ana Paula Ghedini',   specialty:'Clínica Médica - Alta Qual.' },
+      { time:'13:00', doctor:'Henrique',             specialty:'Vascular (2 agendas)' },
+      { time:'13:00', doctor:'Ana Claudia Azarias', specialty:'Gastro Adulto' },
+      { time:'13:00', doctor:'Luana',               specialty:'Gestante' },
+      { time:'13:00', doctor:'Joao Hercos',         specialty:'Cardio' }
+    ]},
+    { id:'f5', day:'Sexta-feira', badge:'SEX', rows:[
+      { time:'07:00', doctor:'Laura Brentini', specialty:'Imuno Alergista Pediatra' },
+      { time:'13:00', doctor:'Laura Pazeto',   specialty:'Pneumo Adulto' }
+    ]}
+  ],
+  consultas: [
+    { id:'c1', day:'Segunda-feira', badge:'SEG', rows:[] },
+    { id:'c2', day:'Terça-feira',   badge:'TER', rows:[] },
+    { id:'c3', day:'Quarta-feira',  badge:'QUA', rows:[] },
+    { id:'c4', day:'Quinta-feira',  badge:'QUI', rows:[] },
+    { id:'c5', day:'Sexta-feira',   badge:'SEX', rows:[] }
+  ]
+};
+
+// ── STATE ──────────────────────────────────────────────────────────
+let data   = JSON.parse(JSON.stringify(DEFAULT));
+let isEdit = false;
+let idCnt  = 9000;
+let pendingAutoSave = null;
+
+// ── HELPERS ────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, err = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (err ? ' error' : '');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function setSyncStatus(state, label) {
+  document.getElementById('syncDot').className   = 'sync-dot ' + state;
+  document.getElementById('syncLabel').textContent = label;
+}
+
+function esc(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────
+function render(sec) {
+  const grid = document.getElementById('grid-' + sec);
+  grid.innerHTML = '';
+
+  (data[sec] || []).forEach((d, di) => {
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    card.style.animationDelay = (di * 0.04) + 's';
+
+    const editExtra = isEdit ? '<span style="width:22px;display:block"></span>' : '';
+
+    let rowsHtml = '';
+    if (!d.rows || !d.rows.length) {
+      rowsHtml = `<div class="empty-row">Sem agendamentos</div>`;
+    } else {
+      d.rows.forEach((r, ri) => {
+        if (isEdit) {
+          rowsHtml += `
+          <div class="schedule-row">
+            <input class="cell-edit time-edit" value="${esc(r.time)}"
+              oninput="upCell('${sec}','${d.id}',${ri},'time',this.value)">
+            <input class="cell-edit" value="${esc(r.doctor)}"
+              oninput="upCell('${sec}','${d.id}',${ri},'doctor',this.value)"
+              placeholder="Nome do médico">
+            <input class="cell-edit spec-edit" value="${esc(r.specialty)}"
+              oninput="upCell('${sec}','${d.id}',${ri},'specialty',this.value)"
+              placeholder="Especialidade">
+            <button class="del-row-btn" onclick="delRow('${sec}','${d.id}',${ri})">✕</button>
+          </div>`;
+        } else {
+          rowsHtml += `
+          <div class="schedule-row">
+            <span class="time-chip">${esc(r.time)}</span>
+            <span class="doctor-cell">${esc(r.doctor)}</span>
+            <span class="specialty-cell">${esc(r.specialty)}</span>
+          </div>`;
+        }
+      });
+    }
+
+    card.innerHTML = `
+      <div class="card-top top-${sec}"></div>
+      <div class="day-header">
+        <div class="day-header-inner">
+          <input class="day-name-input" value="${esc(d.day)}" ${isEdit?'':'readonly'}
+            oninput="upDay('${sec}','${d.id}',this.value)">
+          <span class="day-badge badge-${sec}">${esc(d.badge)}</span>
+        </div>
+        <button class="del-day-btn" onclick="delDay('${sec}','${d.id}')">✕</button>
+      </div>
+      <div class="col-labels">
+        <span>Hora</span><span>Médico</span><span>Especialidade</span>${editExtra}
+      </div>
+      ${rowsHtml}
+      <button class="add-row-btn" onclick="addRow('${sec}','${d.id}')">+ adicionar horário</button>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderAll() { render('unifran'); render('unifacef'); render('consultas'); }
+
+// ── TABS ───────────────────────────────────────────────────────────
+window._showSection = function(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('visible');
+  btn.classList.add('active');
+};
+
+// ── EDIT MODE ──────────────────────────────────────────────────────
+window._toggleEdit = function() {
+  isEdit = !isEdit;
+  const btn = document.getElementById('editBtn');
+  const lbl = document.getElementById('editBtnLabel');
+  if (isEdit) {
+    document.body.classList.add('edit-mode');
+    btn.classList.add('active');
+    lbl.textContent = 'Visualizar';
+    showToast('✏️ Modo edição ativado');
+  } else {
+    document.body.classList.remove('edit-mode');
+    btn.classList.remove('active');
+    lbl.textContent = 'Editar';
+    showToast('👁️ Modo visualização');
+  }
+  renderAll();
+};
+
+// ── MUTATIONS ──────────────────────────────────────────────────────
+window.upCell = function(sec, dayId, ri, field, val) {
+  const d = data[sec].find(x => x.id === dayId);
+  if (d && d.rows[ri]) d.rows[ri][field] = val;
+  scheduleAutoSave();
+};
+window.upDay = function(sec, dayId, val) {
+  const d = data[sec].find(x => x.id === dayId);
+  if (d) d.day = val;
+  scheduleAutoSave();
+};
+window.addRow = function(sec, dayId) {
+  const d = data[sec].find(x => x.id === dayId);
+  if (d) { d.rows.push({ time:'13:00', doctor:'', specialty:'' }); render(sec); }
+};
+window.delRow = function(sec, dayId, ri) {
+  const d = data[sec].find(x => x.id === dayId);
+  if (d) { d.rows.splice(ri, 1); render(sec); scheduleAutoSave(); }
+};
+window._addDay = function(sec) {
+  idCnt++;
+  const badges = ['SEG','TER','QUA','QUI','SEX','SAB','DOM'];
+  data[sec].push({ id:'n'+idCnt, day:'Novo Dia', badge: badges[data[sec].length % 7], rows:[] });
+  render(sec);
+};
+window.delDay = function(sec, dayId) {
+  if (!confirm('Remover este dia da escala?')) return;
+  data[sec] = data[sec].filter(d => d.id !== dayId);
+  render(sec);
+  scheduleAutoSave();
+};
+
+// ── FIREBASE SAVE ──────────────────────────────────────────────────
+async function saveToFirebase() {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  setSyncStatus('syncing', 'Salvando…');
+  try {
+    await set(ref(db, 'ambulatorio'), { data });
+    setSyncStatus('synced', 'Salvo ✓');
+    showToast('✅ Alterações salvas para todos!');
+  } catch(e) {
+    setSyncStatus('error', 'Erro ao salvar');
+    showToast('❌ Erro ao salvar. Verifique as regras do Firebase.', true);
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function scheduleAutoSave() {
+  clearTimeout(pendingAutoSave);
+  setSyncStatus('syncing', 'Não salvo…');
+  pendingAutoSave = setTimeout(() => saveToFirebase(), 1500);
+}
+
+window._salvar = function() {
+  clearTimeout(pendingAutoSave);
+  saveToFirebase();
+};
+
+// ── FIREBASE LISTEN ────────────────────────────────────────────────
+setSyncStatus('syncing', 'Conectando…');
+
+onValue(ref(db, 'ambulatorio'), (snapshot) => {
+  const val = snapshot.val();
+  if (val && val.data) {
+    data = val.data;
+    // ensure all sections exist
+    ['unifran','unifacef','consultas'].forEach(s => { if (!data[s]) data[s] = DEFAULT[s]; });
+  }
+  renderAll();
+  setSyncStatus('synced', 'Sincronizado');
+  document.getElementById('saveBtn').disabled = false;
+  document.getElementById('loadingOverlay').style.display = 'none';
+}, (error) => {
+  setSyncStatus('error', 'Erro de conexão');
+  showToast('❌ Sem conexão com o Firebase.', true);
+  // fallback: render default
+  renderAll();
+  document.getElementById('saveBtn').disabled = false;
+  document.getElementById('loadingOverlay').style.display = 'none';
+  console.error(error);
+});
+</script>
+</body>
+</html>
