@@ -62,7 +62,6 @@
     transition: var(--tr);
   }
 
-  /* ── LOADING ── */
   .loading-overlay {
     position: fixed; inset: 0; background: var(--bg);
     z-index: 999; display: flex; flex-direction: column;
@@ -88,7 +87,6 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── TOPBAR ── */
   .topbar {
     background: var(--white); border-bottom: 1px solid var(--border);
     padding: 0 var(--px); display: flex; align-items: center;
@@ -99,8 +97,7 @@
   .logo-wrap { display:flex; align-items:center; gap:0.7rem; flex-shrink:0; }
   .logo-img {
     height:52px; width:auto; object-fit:contain;
-    transition:opacity 0.3s;
-    flex-shrink:0;
+    transition:opacity 0.3s; flex-shrink:0;
   }
   .logo-img-light { display:block; }
   .logo-img-dark  { display:none; }
@@ -168,7 +165,6 @@
   .save-btn:active { transform:scale(0.97); }
   .save-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
 
-  /* ── PAGE HEADER ── */
   .page-header {
     background:var(--header-bg); padding:clamp(1.75rem,4vw,2.75rem) var(--px) 0;
     position:relative; overflow:hidden; transition:var(--tr);
@@ -200,7 +196,6 @@
     margin:0.85rem 0;
   }
 
-  /* ── TABS ── */
   .tabs-strip {
     display:flex; gap:0; margin-top:1.5rem;
     overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
@@ -227,7 +222,6 @@
   .tab-btn[data-s="unifacef"].active  { color:#4ad199; border-bottom-color:#4ad199; }
   .tab-btn[data-s="consultas"].active { color:#c084fc; border-bottom-color:#c084fc; }
 
-  /* ── MAIN ── */
   .main-content { max-width:1200px; margin:0 auto; padding:clamp(1.5rem,3vw,2.25rem) var(--px); }
   .section { display:none; }
   .section.visible { display:block; }
@@ -245,7 +239,6 @@
   .lbl-f { background:rgba(var(--acc-f-rgb),0.1); color:var(--acc-f2); border:1px solid rgba(var(--acc-f-rgb),0.25); }
   .lbl-c { background:rgba(var(--acc-c-rgb),0.1); color:var(--acc-c2); border:1px solid rgba(var(--acc-c-rgb),0.25); }
 
-  /* ── GRID ── */
   .grid {
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));
@@ -259,9 +252,38 @@
     box-shadow:var(--card-shadow);
     transition:box-shadow 0.2s,transform 0.2s,border-color 0.2s;
     animation:fadeUp 0.45s ease both; min-width:0;
+    position:relative;
   }
   .day-card:hover { box-shadow:0 8px 28px rgba(0,0,0,0.11); transform:translateY(-2px); }
   html.dark .day-card:hover { box-shadow:0 8px 32px rgba(0,0,0,0.55); }
+
+  /* Drag states */
+  .day-card.drag-over {
+    border-color:var(--accent) !important;
+    box-shadow:0 0 0 2px rgba(var(--accent-rgb),0.3) !important;
+    transform:none !important;
+  }
+  .day-card.dragging-source {
+    opacity:0.4;
+    transform:none !important;
+  }
+  .day-card.card-dragging {
+    opacity:0.35;
+    transform:scale(0.97) !important;
+    box-shadow:none !important;
+  }
+  .day-card.card-drop-over {
+    border-color:var(--accent) !important;
+    box-shadow:0 0 0 2px rgba(var(--accent-rgb),0.4), 0 8px 28px rgba(0,0,0,0.13) !important;
+    transform:translateY(-3px) !important;
+  }
+  .card-drag-handle {
+    font-size:0.9rem; color:var(--muted); cursor:grab;
+    flex-shrink:0; padding:0 2px; line-height:1;
+    user-select:none;
+  }
+  .card-drag-handle:hover { color:var(--accent); }
+
   @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   .card-top { height:3px; }
   .top-unifran   { background:linear-gradient(90deg,var(--acc-u),var(--acc-u2),transparent); }
@@ -302,11 +324,9 @@
   .del-day-btn:hover { background:rgba(200,60,60,0.1); color:#c04040; border-color:rgba(200,60,60,0.35); }
   .edit-mode .del-day-btn { display:flex; }
 
-  /* ── SCHEDULE ROWS ── */
-  .col-labels, .schedule-row {
-    display:grid; grid-template-columns:54px 1fr 1fr; align-items:center;
-  }
+  /* schedule rows */
   .col-labels {
+    display:grid; grid-template-columns:48px 1fr;
     padding:0.4rem 0.9rem; background:var(--col-labels-bg);
     border-bottom:1px solid var(--border);
   }
@@ -314,44 +334,53 @@
     font-size:0.57rem; font-weight:700; color:var(--muted);
     text-transform:uppercase; letter-spacing:0.1em;
   }
-  .col-labels span:first-child { text-align:left; }
-  .col-labels span:nth-child(2) { text-align:left; padding-left:2px; }
-  .col-labels span:nth-child(3) { text-align:right; }
+  .col-labels span:nth-child(3) { display:none; }
 
   .schedule-row {
-    padding:0.7rem 0.9rem; border-bottom:1px solid rgba(0,0,0,0.04);
+    display:grid; grid-template-columns:48px 1fr;
+    align-items:start;
+    padding:0.65rem 0.9rem; border-bottom:1px solid rgba(0,0,0,0.04);
     transition:background 0.12s; min-width:0; gap:0.25rem;
+    cursor:default;
   }
   html.dark .schedule-row { border-bottom-color:rgba(255,255,255,0.04); }
   .schedule-row:hover { background:var(--row-hover); }
   .schedule-row:last-child { border-bottom:none; }
+  .schedule-row.row-dragging { opacity:0.4; }
+  .schedule-row.row-drag-over { border-top:2px solid var(--accent); margin-top:-1px; }
 
-  /* ── TEXT — IMPROVED VISIBILITY ── */
+  .row-text { display:flex; flex-direction:column; gap:0.15rem; min-width:0; }
+
   .time-chip {
-    font-size:0.78rem; font-weight:700;
-    color:var(--time-color);
-    font-variant-numeric:tabular-nums;
-    font-family:'DM Sans',sans-serif;
-    white-space:nowrap;
+    font-size:0.75rem; font-weight:700; color:var(--time-color);
+    font-variant-numeric:tabular-nums; font-family:'DM Sans',sans-serif;
+    white-space:nowrap; padding-top:2px;
   }
   .doctor-cell {
-    font-size:0.85rem; font-weight:600;
-    color:var(--doctor-color);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    line-height:1.3;
+    font-size:0.84rem; font-weight:600; color:var(--doctor-color);
+    white-space:normal; word-break:break-word; line-height:1.35;
   }
   .specialty-cell {
-    font-size:0.78rem; font-weight:500;
-    color:var(--specialty-color);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    text-align:right; line-height:1.3;
+    font-size:0.73rem; font-weight:500; color:var(--specialty-color);
+    white-space:normal; word-break:break-word; line-height:1.3;
   }
 
-  /* ── EDIT MODE ── */
-  .edit-mode .col-labels,
-  .edit-mode .schedule-row { grid-template-columns:54px 1fr 1fr 22px; }
-  .edit-mode .schedule-row { padding:0.5rem 0.65rem; gap:0.3rem; }
-  .edit-mode .col-labels   { padding:0.4rem 0.65rem; }
+  .drag-handle {
+    display:none; align-items:center; justify-content:center;
+    color:var(--muted); font-size:0.75rem; cursor:grab; padding:0 2px; flex-shrink:0;
+  }
+  .edit-mode .drag-handle { display:flex; }
+
+  /* edit mode overrides */
+  .edit-mode .col-labels {
+    grid-template-columns:16px 48px 1fr 1fr; padding:0.4rem 0.65rem;
+  }
+  .edit-mode .col-labels span:nth-child(3) { display:block; }
+  .edit-mode .schedule-row {
+    grid-template-columns:16px 54px 1fr 1fr 22px;
+    align-items:center; padding:0.5rem 0.65rem; gap:0.3rem;
+  }
+  .edit-mode .row-text { flex-direction:row; gap:0; }
 
   .cell-edit {
     font-family:'DM Sans',sans-serif; font-size:0.83rem; font-weight:500;
@@ -388,7 +417,16 @@
   .edit-mode .add-row-btn { display:block; }
   .add-row-btn:hover { background:var(--row-hover); color:var(--text); }
 
-  /* ── ADD DAY ── */
+  /* Drag-drop hint badge on card */
+  .drag-hint {
+    display:none; position:absolute; top:6px; right:6px;
+    font-size:0.55rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+    padding:0.12rem 0.4rem; border-radius:3px;
+    background:rgba(var(--accent-rgb),0.12); color:var(--accent);
+    border:1px solid rgba(var(--accent-rgb),0.3);
+  }
+  .edit-mode .drag-hint { display:block; }
+
   .add-day-wrap { display:none; margin-bottom:1.5rem; }
   .edit-mode .add-day-wrap { display:block; }
   .add-day-btn {
@@ -401,7 +439,6 @@
   }
   .add-day-btn:hover { border-style:solid; border-color:var(--accent); color:var(--accent); background:rgba(var(--accent-rgb),0.04); }
 
-  /* ── INFO CARD ── */
   .info-card {
     background:var(--white); border:1px solid var(--border); border-radius:8px;
     padding:1rem 1.25rem; box-shadow:var(--card-shadow);
@@ -420,7 +457,6 @@
   }
   .info-text { font-size:clamp(0.78rem,2vw,0.84rem); color:var(--specialty-color); line-height:1.6; }
 
-  /* ── TOAST ── */
   .toast {
     position:fixed; top:1.25rem; left:50%;
     transform:translateX(-50%) translateY(-100px);
@@ -436,7 +472,6 @@
   .toast.show  { transform:translateX(-50%) translateY(0); }
   .toast.error { background:#2a0f0f; border-color:rgba(200,60,60,0.4); }
 
-  /* ── FOOTER ── */
   footer {
     background:var(--white); border-top:1px solid var(--border);
     padding:0.85rem var(--px); text-align:center;
@@ -445,7 +480,6 @@
   }
   footer span { color:var(--accent); }
 
-  /* ── RESPONSIVE ── */
   @media (min-width:900px)  { .grid { grid-template-columns:repeat(5,1fr); } }
   @media (max-width:768px)  {
     .topbar { height:62px; }
@@ -464,7 +498,6 @@
   }
   @media (min-width:1400px) { .main-content { padding-left:0; padding-right:0; } }
 
-  /* PRINT */
   @media print {
     .topbar,.tabs-strip,.add-day-wrap,.add-row-btn,
     .del-day-btn,.del-row-btn,.toast,footer,.loading-overlay { display:none !important; }
@@ -476,7 +509,6 @@
 </head>
 <body>
 
-<!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
   <img src="cyberleon_black.png" alt="CyberLeon" class="loading-logo loading-logo-light">
   <img src="cyberleon_white__1_.png" alt="CyberLeon" class="loading-logo loading-logo-dark">
@@ -484,7 +516,6 @@
   <span>Conectando ao Firebase…</span>
 </div>
 
-<!-- TOPBAR -->
 <nav class="topbar">
   <div class="logo-wrap">
     <img src="cyberleon_black.png" alt="CyberLeon" class="logo-img logo-img-light">
@@ -521,7 +552,6 @@
   </div>
 </nav>
 
-<!-- PAGE HEADER -->
 <div class="page-header">
   <div class="page-header-inner">
     <h1 class="page-title">Escala <span>Ambulatorial</span></h1>
@@ -541,10 +571,8 @@
   </div>
 </div>
 
-<!-- MAIN -->
 <div class="main-content">
 
-  <!-- UNIFRAN -->
   <div class="section visible" id="sec-unifran">
     <p class="section-label">Ambulatório Escola <span class="lbl-badge lbl-u">Convênio SUS</span></p>
     <div class="grid" id="grid-unifran"></div>
@@ -558,7 +586,6 @@
     </div>
   </div>
 
-  <!-- UNIFACEF -->
   <div class="section" id="sec-unifacef">
     <p class="section-label">Ambulatório Escola <span class="lbl-badge lbl-f">Convênio Prefeitura de Franca</span></p>
     <div class="grid" id="grid-unifacef"></div>
@@ -572,7 +599,6 @@
     </div>
   </div>
 
-  <!-- CONSULTAS -->
   <div class="section" id="sec-consultas">
     <p class="section-label">Agenda Livre <span class="lbl-badge lbl-c">Ambulatório de Consultas</span></p>
     <div class="grid" id="grid-consultas"></div>
@@ -581,7 +607,7 @@
       <div class="info-icon">📋</div>
       <div class="info-body">
         <div class="info-title">Informações · Ambulatório de Consultas</div>
-        <div class="info-text">Agenda livre para consultas avulsas. Ative o <strong>modo edição</strong> para adicionar médicos e horários.</div>
+        <div class="info-text">Agenda livre para consultas avulsas. Ative o <strong>modo edição</strong> para adicionar médicos e horários. Segure e arraste o <strong>cabeçalho ⠿</strong> do card para reordenar os dias.</div>
       </div>
     </div>
   </div>
@@ -695,6 +721,10 @@ let isEdit = false;
 let idCnt  = 9000;
 let pendingAutoSave = null;
 
+// Drag state
+let dragSec = null, dragDayId = null, dragRowIdx = null;
+let dragTargetSec = null, dragTargetDayId = null, dragTargetRowIdx = null;
+
 // ── HELPERS ────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, err = false) {
@@ -726,8 +756,12 @@ function render(sec) {
     const card = document.createElement('div');
     card.className = 'day-card';
     card.style.animationDelay = (di * 0.04) + 's';
+    card.dataset.sec = sec;
+    card.dataset.dayId = d.id;
 
-    const editExtra = isEdit ? '<span style="width:22px;display:block"></span>' : '';
+    const editExtra = isEdit
+      ? `<span style="width:16px;display:block"></span>`
+      : '';
 
     let rowsHtml = '';
     if (!d.rows || !d.rows.length) {
@@ -736,7 +770,9 @@ function render(sec) {
       d.rows.forEach((r, ri) => {
         if (isEdit) {
           rowsHtml += `
-          <div class="schedule-row">
+          <div class="schedule-row" draggable="true"
+            data-sec="${esc(sec)}" data-day="${esc(d.id)}" data-ri="${ri}">
+            <span class="drag-handle" title="Arrastar">⠿</span>
             <input class="cell-edit time-edit" value="${esc(r.time)}"
               oninput="upCell('${sec}','${d.id}',${ri},'time',this.value)">
             <input class="cell-edit" value="${esc(r.doctor)}"
@@ -751,8 +787,10 @@ function render(sec) {
           rowsHtml += `
           <div class="schedule-row">
             <span class="time-chip">${esc(r.time)}</span>
-            <span class="doctor-cell">${esc(r.doctor)}</span>
-            <span class="specialty-cell">${esc(r.specialty)}</span>
+            <div class="row-text">
+              <span class="doctor-cell">${esc(r.doctor)}</span>
+              <span class="specialty-cell">${esc(r.specialty)}</span>
+            </div>
           </div>`;
         }
       });
@@ -760,25 +798,151 @@ function render(sec) {
 
     card.innerHTML = `
       <div class="card-top top-${sec}"></div>
-      <div class="day-header">
+      <div class="day-header"
+        draggable="${isEdit}"
+        ondragstart="_onCardDragStart(event,'${sec}','${d.id}')"
+        ondragend="_onCardDragEnd(event)"
+        ondragover="_onCardDropZoneDragOver(event,'${sec}','${d.id}')"
+        ondrop="_onCardDropZoneDrop(event,'${sec}','${d.id}')"
+        style="${isEdit ? 'cursor:grab' : ''}">
         <div class="day-header-inner">
+          ${isEdit ? '<span class="card-drag-handle" title="Arrastar dia">⠿</span>' : ''}
           <input class="day-name-input" value="${esc(d.day)}" ${isEdit?'':'readonly'}
+            ondragstart="event.stopPropagation()"
             oninput="upDay('${sec}','${d.id}',this.value)">
           <span class="day-badge badge-${sec}">${esc(d.badge)}</span>
         </div>
         <button class="del-day-btn" onclick="delDay('${sec}','${d.id}')">✕</button>
       </div>
       <div class="col-labels">
-        <span>Hora</span><span>Médico</span><span>Especialidade</span>${editExtra}
+        ${isEdit ? '<span></span>' : ''}<span>Hora</span><span>Médico</span><span>Especialidade</span>${editExtra}
       </div>
-      ${rowsHtml}
+      <div class="rows-container" data-sec="${esc(sec)}" data-day="${esc(d.id)}">
+        ${rowsHtml}
+      </div>
       <button class="add-row-btn" onclick="addRow('${sec}','${d.id}')">+ adicionar horário</button>
     `;
+
     grid.appendChild(card);
   });
+
+  // Bind row drag events after DOM is ready
+  if (isEdit) {
+    grid.querySelectorAll('.schedule-row[draggable]').forEach(row => {
+      row.addEventListener('dragstart', onRowDragStart);
+      row.addEventListener('dragend',   onRowDragEnd);
+      row.addEventListener('dragover',  onRowDragOver);
+      row.addEventListener('dragleave', onRowDragLeave);
+      row.addEventListener('drop',      onRowDrop);
+    });
+  }
 }
 
 function renderAll() { render('unifran'); render('unifacef'); render('consultas'); }
+
+// ── DRAG & DROP — ROWS ─────────────────────────────────────────────
+function onRowDragStart(e) {
+  const row = e.currentTarget;
+  dragSec    = row.dataset.sec;
+  dragDayId  = row.dataset.day;
+  dragRowIdx = parseInt(row.dataset.ri, 10);
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', `${dragSec}|${dragDayId}|${dragRowIdx}`);
+  setTimeout(() => row.classList.add('row-dragging'), 0);
+
+  // Highlight source card
+  const srcCard = row.closest('.day-card');
+  if (srcCard) srcCard.classList.add('dragging-source');
+}
+
+function onRowDragEnd(e) {
+  e.currentTarget.classList.remove('row-dragging');
+  document.querySelectorAll('.dragging-source').forEach(el => el.classList.remove('dragging-source'));
+  document.querySelectorAll('.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+function onRowDragOver(e) {
+  e.preventDefault(); e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+  e.currentTarget.classList.add('row-drag-over');
+  dragTargetSec    = e.currentTarget.dataset.sec;
+  dragTargetDayId  = e.currentTarget.dataset.day;
+  dragTargetRowIdx = parseInt(e.currentTarget.dataset.ri, 10);
+}
+
+function onRowDragLeave(e) {
+  e.currentTarget.classList.remove('row-drag-over');
+}
+
+function onRowDrop(e) {
+  e.preventDefault(); e.stopPropagation();
+  e.currentTarget.classList.remove('row-drag-over');
+  if (dragSec === null) return;
+  moveRow(dragSec, dragDayId, dragRowIdx, dragTargetSec, dragTargetDayId, dragTargetRowIdx);
+  dragSec = dragDayId = dragRowIdx = null;
+  dragTargetSec = dragTargetDayId = dragTargetRowIdx = null;
+}
+
+// Drop on empty card area (no rows yet, or after last row)
+function onCardDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onCardDragLeave(e) {
+  // Only clear if leaving the card entirely
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+}
+
+function onCardDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragSec === null) return;
+
+  const targetSec   = e.currentTarget.dataset.sec;
+  const targetDayId = e.currentTarget.dataset.dayId;
+
+  // Find the target day
+  const targetDay = data[targetSec] && data[targetSec].find(d => d.id === targetDayId);
+  if (!targetDay) return;
+
+  // If row dropped on same position, bail
+  if (dragSec === targetSec && dragDayId === targetDayId) {
+    dragSec = dragDayId = dragRowIdx = null;
+    return;
+  }
+
+  // Move to end of target day
+  moveRow(dragSec, dragDayId, dragRowIdx, targetSec, targetDayId, targetDay.rows.length);
+  dragSec = dragDayId = dragRowIdx = null;
+  dragTargetSec = dragTargetDayId = dragTargetRowIdx = null;
+}
+
+function moveRow(fromSec, fromDayId, fromIdx, toSec, toDayId, toIdx) {
+  const fromDay = data[fromSec] && data[fromSec].find(d => d.id === fromDayId);
+  const toDay   = data[toSec]   && data[toSec].find(d => d.id === toDayId);
+  if (!fromDay || !toDay) return;
+  if (fromIdx < 0 || fromIdx >= fromDay.rows.length) return;
+
+  const [row] = fromDay.rows.splice(fromIdx, 1);
+
+  // Adjust toIdx if moving within same day and toIdx > fromIdx
+  let insertIdx = toIdx;
+  if (fromSec === toSec && fromDayId === toDayId && toIdx > fromIdx) insertIdx--;
+
+  insertIdx = Math.max(0, Math.min(insertIdx, toDay.rows.length));
+  toDay.rows.splice(insertIdx, 0, row);
+
+  render(fromSec);
+  if (toSec !== fromSec || toDayId !== fromDayId) render(toSec);
+  scheduleAutoSave();
+  showToast('↔️ Agendamento movido');
+}
 
 // ── TABS ───────────────────────────────────────────────────────────
 window._showSection = function(name, btn) {
@@ -797,7 +961,7 @@ window._toggleEdit = function() {
     document.body.classList.add('edit-mode');
     btn.classList.add('active');
     lbl.textContent = 'Visualizar';
-    showToast('✏️ Modo edição ativado');
+    showToast('✏️ Modo edição ativado — arraste ⠿ para mover');
   } else {
     document.body.classList.remove('edit-mode');
     btn.classList.remove('active');
@@ -809,22 +973,27 @@ window._toggleEdit = function() {
 
 // ── MUTATIONS ──────────────────────────────────────────────────────
 window.upCell = function(sec, dayId, ri, field, val) {
-  const d = data[sec].find(x => x.id === dayId);
-  if (d && d.rows[ri]) d.rows[ri][field] = val;
+  const d = data[sec] && data[sec].find(x => x.id === dayId);
+  if (d && d.rows && d.rows[ri]) d.rows[ri][field] = val;
   scheduleAutoSave();
 };
 window.upDay = function(sec, dayId, val) {
-  const d = data[sec].find(x => x.id === dayId);
+  const d = data[sec] && data[sec].find(x => x.id === dayId);
   if (d) d.day = val;
   scheduleAutoSave();
 };
 window.addRow = function(sec, dayId) {
-  const d = data[sec].find(x => x.id === dayId);
-  if (d) { d.rows.push({ time:'13:00', doctor:'', specialty:'' }); render(sec); }
+  const d = data[sec] && data[sec].find(x => x.id === dayId);
+  if (d) {
+    if (!Array.isArray(d.rows)) d.rows = []; // Firebase returns null for empty arrays
+    d.rows.push({ time:'13:00', doctor:'', specialty:'' });
+    render(sec);
+    scheduleAutoSave();
+  }
 };
 window.delRow = function(sec, dayId, ri) {
-  const d = data[sec].find(x => x.id === dayId);
-  if (d) { d.rows.splice(ri, 1); render(sec); scheduleAutoSave(); }
+  const d = data[sec] && data[sec].find(x => x.id === dayId);
+  if (d && Array.isArray(d.rows)) { d.rows.splice(ri, 1); render(sec); scheduleAutoSave(); }
 };
 window._addDay = function(sec) {
   idCnt++;
@@ -837,6 +1006,54 @@ window.delDay = function(sec, dayId) {
   data[sec] = data[sec].filter(d => d.id !== dayId);
   render(sec);
   scheduleAutoSave();
+};
+
+// ── CARD DRAG-TO-REORDER ───────────────────────────────────────────
+let cardDragSec = null, cardDragId = null;
+
+window._onCardDragStart = function(e, sec, dayId) {
+  // Only start if drag originates from the header handle, not from inputs
+  cardDragSec = sec;
+  cardDragId  = dayId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', `card|${sec}|${dayId}`);
+  const card = e.currentTarget;
+  setTimeout(() => card.classList.add('card-dragging'), 0);
+};
+
+window._onCardDragEnd = function(e) {
+  e.currentTarget.classList.remove('card-dragging');
+  document.querySelectorAll('.card-drop-over').forEach(el => el.classList.remove('card-drop-over'));
+  cardDragSec = null; cardDragId = null;
+};
+
+window._onCardDropZoneDragOver = function(e, sec, dayId) {
+  if (!cardDragSec || cardDragSec !== sec) return; // only reorder within same section
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.card-drop-over').forEach(el => el.classList.remove('card-drop-over'));
+  // highlight the card being hovered
+  const grid = document.getElementById('grid-' + sec);
+  const cards = grid.querySelectorAll('.day-card');
+  cards.forEach(c => { if (c.dataset.dayId === dayId) c.classList.add('card-drop-over'); });
+};
+
+window._onCardDropZoneDrop = function(e, sec, dayId) {
+  e.preventDefault();
+  document.querySelectorAll('.card-drop-over').forEach(el => el.classList.remove('card-drop-over'));
+  if (!cardDragSec || cardDragSec !== sec || cardDragId === dayId) return;
+
+  const arr = data[sec];
+  const fromIdx = arr.findIndex(d => d.id === cardDragId);
+  const toIdx   = arr.findIndex(d => d.id === dayId);
+  if (fromIdx < 0 || toIdx < 0) return;
+
+  const [moved] = arr.splice(fromIdx, 1);
+  arr.splice(toIdx, 0, moved);
+  render(sec);
+  scheduleAutoSave();
+  showToast('↔️ Dia reordenado');
+  cardDragSec = null; cardDragId = null;
 };
 
 // ── FIREBASE SAVE ──────────────────────────────────────────────────
@@ -875,7 +1092,6 @@ onValue(ref(db, 'ambulatorio'), (snapshot) => {
   const val = snapshot.val();
   if (val && val.data) {
     data = val.data;
-    // ensure all sections exist
     ['unifran','unifacef','consultas'].forEach(s => { if (!data[s]) data[s] = DEFAULT[s]; });
   }
   renderAll();
@@ -885,7 +1101,6 @@ onValue(ref(db, 'ambulatorio'), (snapshot) => {
 }, (error) => {
   setSyncStatus('error', 'Erro de conexão');
   showToast('❌ Sem conexão com o Firebase.', true);
-  // fallback: render default
   renderAll();
   document.getElementById('saveBtn').disabled = false;
   document.getElementById('loadingOverlay').style.display = 'none';
